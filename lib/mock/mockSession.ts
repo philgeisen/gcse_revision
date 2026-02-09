@@ -4,6 +4,8 @@ export const buildMockSession = ({
   examEvent,
   question
 }: {
+  examEvent: { examName: string; startAt: Date };
+  question: { id: string; subjectName: string; topicLabel?: string | null };
   examEvent: ExamEvent;
   question: QuestionBankItem;
 }) => {

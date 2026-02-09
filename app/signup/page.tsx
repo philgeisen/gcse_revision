@@ -14,6 +14,11 @@ export default function SignupPage() {
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Supabase env vars are missing for auth.');
+      return;
+    }
+    const supabase = createSupabaseBrowserClient();
     const { error: signUpError } = await supabase.auth.signUp({ email, password });
     if (signUpError) {
       setError(signUpError.message);

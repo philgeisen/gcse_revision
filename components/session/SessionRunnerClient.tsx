@@ -13,17 +13,9 @@ import { ProgressGlyphs } from '@/components/motifs/ProgressGlyphs';
 import { SessionTape } from '@/components/motifs/SessionTape';
 import { createEvent } from '@/lib/tape/tape';
 
-export const dynamicParams = false;
-
-export const generateStaticParams = () => [{ id: 'mock' }];
-
-import { SessionRunnerClient } from '@/components/session/SessionRunnerClient';
-
-export default function SessionPage() {
-  return <SessionRunnerClient />;
-export default function SessionPage() {
-  const [step, setStep] = useState(3);
-  const [seconds, setSeconds] = useState(300);
+export const SessionRunnerClient = () => {
+  const [step] = useState(3);
+  const [seconds] = useState(300);
   const [events, setEvents] = useState([createEvent('mock', 'SESSION_START', {})]);
 
   const addEvent = (type: string, meta: Record<string, unknown>) => {
@@ -62,4 +54,4 @@ export default function SessionPage() {
       </div>
     </main>
   );
-}
+};

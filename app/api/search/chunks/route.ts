@@ -12,6 +12,11 @@ export async function POST(request: NextRequest) {
   if (!query) return NextResponse.json({ chunks: [] });
 
   try {
+    const rows = (await prisma.$queryRawUnsafe(
+      `SELECT "id", "documentId", "content" FROM "DocumentChunk" WHERE to_tsvector('english', "content") @@ plainto_tsquery('english', $1) LIMIT $2`,
+      query,
+      limit
+    )) as { id: string; documentId: string; content: string }[];
     const rows = await prisma.$queryRawUnsafe<
       { id: string; documentId: string; content: string }[]
     >(
