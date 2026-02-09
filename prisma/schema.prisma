@@ -1,0 +1,409 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentKind {
+  spec
+  mark_scheme
+  notes
+  paper
+  other
+}
+
+enum DiagnosticQtype {
+  mcq
+  scale
+  rank
+  choose2
+}
+
+model AppUser {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  profile   UserProfile?
+}
+
+model UserProfile {
+  userId                String   @id
+  timezone              String
+  displayName           String?
+  onboardingCompleted   Boolean  @default(false)
+  diagnosticCompleted   Boolean  @default(false)
+  user                  AppUser  @relation(fields: [userId], references: [id])
+}
+
+model ExamBoard {
+  id    String @id @default(uuid())
+  name  String @unique
+  users UserSubject[]
+}
+
+model UserSubject {
+  id          String    @id @default(uuid())
+  userId      String
+  subjectName String
+  examBoardId String
+  tier        String?
+  examBoard   ExamBoard @relation(fields: [examBoardId], references: [id])
+  examEvents  ExamEvent[]
+}
+
+model ExamEvent {
+  id            String   @id @default(uuid())
+  userId        String
+  userSubjectId String
+  examName      String
+  startAt       DateTime
+  durationMin   Int?
+  subject       UserSubject @relation(fields: [userSubjectId], references: [id])
+}
+
+model SessionPlan {
+  id                 String   @id @default(uuid())
+  userId             String
+  plannedFor         DateTime
+  status             String
+  expectedDurationMin Int
+  whyThisToday       String
+  sessionJson        Json
+  endedOnWin         Boolean?
+  completedAt        DateTime?
+  sessionMetrics     Json?
+  @@unique([userId, plannedFor], name: "userId_plannedFor")
+}
+
+model QuestionBankItem {
+  id             String   @id @default(uuid())
+  userId         String
+  subjectName    String
+  prompt         String
+  marks          Int
+  difficulty     Int
+  qtype          String
+  topicLabel     String?
+  sourceChunkIds String[] @default([])
+  specPointIds   String[] @default([])
+  markPoints     MarkPoint[]
+  solutions      SolutionStep[]
+}
+
+model MarkPoint {
+  id         String @id @default(uuid())
+  questionId String
+  pointText  String
+  pointValue Int
+  question   QuestionBankItem @relation(fields: [questionId], references: [id])
+}
+
+model Attempt {
+  id         String   @id @default(uuid())
+  userId     String
+  questionId String
+  answerText String?
+  confidence Int?
+  createdAt  DateTime @default(now())
+  externalId String?  @unique
+  handwriting HandwritingCapture?
+  outcome    AttemptOutcome?
+  mark       AttemptMark?
+}
+
+model HandwritingCapture {
+  id         String   @id @default(uuid())
+  attemptId  String   @unique
+  strokesJson Json
+  createdAt  DateTime @default(now())
+  externalId String?  @unique
+  attempt    Attempt  @relation(fields: [attemptId], references: [id])
+}
+
+model ContentPack {
+  id          String   @id @default(uuid())
+  name        String
+  version     String
+  description String?
+  createdAt   DateTime @default(now())
+  documents   Document[]
+  @@unique([name, version])
+}
+
+model Document {
+  id            String       @id @default(uuid())
+  contentPackId String
+  kind          DocumentKind
+  subjectName   String
+  examBoardName String
+  tier          String?
+  title         String
+  storagePath   String
+  sha256        String @unique
+  pageCount     Int?
+  status        String
+  createdAt     DateTime @default(now())
+  contentPack   ContentPack @relation(fields: [contentPackId], references: [id])
+  chunks        DocumentChunk[]
+}
+
+model DocumentChunk {
+  id            String   @id @default(uuid())
+  documentId    String
+  chunkIndex    Int
+  pageStart     Int?
+  pageEnd       Int?
+  headingPath   String[] @default([])
+  content       String
+  contentSha256 String
+  tokenCount    Int?
+  createdAt     DateTime @default(now())
+  document      Document @relation(fields: [documentId], references: [id])
+  @@unique([documentId, chunkIndex])
+}
+
+model DiagnosticQuestion {
+  id          String @id @default(uuid())
+  blockId     Int
+  orderInBlock Int
+  qtype       DiagnosticQtype
+  prompt      String
+  options     Json?
+  scaleMin    Int?
+  scaleMax    Int?
+  traitWeights Json
+  createdAt   DateTime @default(now())
+}
+
+model DiagnosticResponse {
+  id          String @id @default(uuid())
+  userId      String
+  questionId  String
+  answer      Json
+  responseTimeMs Int
+  createdAt   DateTime @default(now())
+  @@unique([userId, questionId])
+}
+
+model LearnerPolicy {
+  id          String @id @default(uuid())
+  userId      String
+  version     Int    @default(1)
+  isLocked    Boolean @default(true)
+  traitScores Json
+  policyJson  Json
+  createdAt   DateTime @default(now())
+  @@unique([userId, version])
+}
+
+model AvailabilityRule {
+  id              String @id @default(uuid())
+  userId          String
+  dayOfWeek       Int
+  minutesAvailable Int
+  createdAt       DateTime @default(now())
+  @@unique([userId, dayOfWeek])
+}
+
+model TopicCatalog {
+  id          String @id @default(uuid())
+  userId      String
+  subjectName String
+  topicLabel  String
+  createdAt   DateTime @default(now())
+  @@unique([userId, subjectName, topicLabel])
+}
+
+model TopicMasteryState {
+  id            String @id @default(uuid())
+  userId        String
+  subjectName   String
+  topicLabel    String
+  masteryScore  Float  @default(0.0)
+  accuracyRate  Float  @default(0.0)
+  attemptsCount Int    @default(0)
+  lastSeenAt    DateTime?
+  decayRate     Float  @default(0.05)
+  updatedAt     DateTime @updatedAt
+  @@unique([userId, subjectName, topicLabel])
+}
+
+model AttemptOutcome {
+  id         String @id @default(uuid())
+  attemptId  String @unique
+  isCorrect  Boolean
+  marksAwarded Int
+  maxMarks   Int
+  errorType  String?
+  createdAt  DateTime @default(now())
+  attempt    Attempt @relation(fields: [attemptId], references: [id])
+}
+
+model SpecPoint {
+  id            String @id @default(uuid())
+  subjectName   String
+  examBoardName String
+  topicLabel    String?
+  code          String?
+  statement     String
+  keywords      String[] @default([])
+  tier          String?
+  createdAt     DateTime @default(now())
+  evidences     SpecPointEvidence[]
+  @@unique([subjectName, examBoardName, statement])
+}
+
+model SpecPointEvidence {
+  id          String @id @default(uuid())
+  specPointId String
+  chunkId     String
+  pageRef     String?
+  snippet     String
+  createdAt   DateTime @default(now())
+  @@unique([specPointId, chunkId])
+}
+
+model SpecPointEdge {
+  id             String @id @default(uuid())
+  fromSpecPointId String
+  toSpecPointId   String
+  relation       String
+  @@unique([fromSpecPointId, toSpecPointId, relation])
+}
+
+model SpecPointMasteryState {
+  id            String @id @default(uuid())
+  userId        String
+  subjectName   String
+  examBoardName String
+  specPointId   String
+  masteryScore  Float @default(0)
+  accuracyRate  Float @default(0)
+  attemptsCount Int @default(0)
+  lastSeenAt    DateTime?
+  decayRate     Float @default(0.05)
+  updatedAt     DateTime @updatedAt
+  @@unique([userId, specPointId])
+}
+
+model SolutionStep {
+  id         String @id @default(uuid())
+  questionId String
+  stepIndex  Int
+  stepText   String
+  checkType  String
+  @@unique([questionId, stepIndex])
+}
+
+model AttemptMark {
+  id            String @id @default(uuid())
+  attemptId     String @unique
+  totalMarksAwarded Int
+  maxMarks      Int
+  markPointResults Json
+  suggestedErrorType String?
+  confirmedErrorType String?
+  feedbackSummary String
+  createdAt     DateTime @default(now())
+}
+
+model Flashcard {
+  id            String @id @default(uuid())
+  userId        String
+  subjectName   String
+  examBoardName String
+  topicLabel    String?
+  specPointId   String?
+  cardType      String
+  front         String
+  back          String
+  sourceChunkIds String[] @default([])
+  dueAt         DateTime
+  ease          Float @default(2.3)
+  intervalDays  Int @default(1)
+  streak        Int @default(0)
+  lastReviewedAt DateTime?
+  createdAt     DateTime @default(now())
+  reviews       FlashcardReview[]
+}
+
+model FlashcardReview {
+  id          String @id @default(uuid())
+  userId      String
+  flashcardId String
+  rating      String
+  reviewedAt  DateTime @default(now())
+}
+
+model PracticeTest {
+  id            String @id @default(uuid())
+  userId        String
+  subjectName   String
+  examBoardName String
+  mode          String
+  durationMin   Int
+  blueprintJson Json
+  questionIds   String[]
+  startedAt     DateTime?
+  completedAt   DateTime?
+  resultsJson   Json?
+  createdAt     DateTime @default(now())
+}
+
+model LLMCacheEntry {
+  id        String @id @default(uuid())
+  userId    String?
+  scope     String
+  cacheKey  String @unique
+  model     String
+  temperature Float
+  promptHash String
+  chunkIds  String[] @default([])
+  responseJson Json
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+}
+
+model BackgroundJob {
+  id        String @id @default(uuid())
+  userId    String?
+  type      String
+  payload   Json
+  status    String
+  runAt     DateTime
+  attempts  Int @default(0)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BackupSnapshot {
+  id        String @id @default(uuid())
+  userId    String
+  kind      String
+  snapshotJson Json
+  createdAt DateTime @default(now())
+}
+
+model RateLimitCounter {
+  id         String @id @default(uuid())
+  userId     String
+  windowStart DateTime
+  count      Int
+  @@unique([userId, windowStart])
+}
+
+model SessionTapeEvent {
+  id            String @id @default(uuid())
+  userId        String
+  sessionPlanId String
+  ts            DateTime
+  type          String
+  meta          Json
+  createdAt     DateTime @default(now())
+  externalId    String? @unique
+  @@index([userId, sessionPlanId, ts])
+  @@index([sessionPlanId, ts])
+}
