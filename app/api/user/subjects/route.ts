@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await request.json();
   const subjects: { subjectName: string; examBoardName: string; tier?: string }[] = body.subjects ?? [];
+  const subjects = body.subjects ?? [];
 
   const boards = await prisma.examBoard.findMany();
 
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
 
   for (const subject of subjects) {
     const board = boards.find((item: { name: string }) => item.name === subject.examBoardName);
+    const board = boards.find((item) => item.name === subject.examBoardName);
     if (!board) continue;
     await prisma.userSubject.create({
       data: {

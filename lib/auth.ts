@@ -15,6 +15,7 @@ export const getUserId = async (request: NextRequest) => {
     {
       cookies: {
         get: (name: string) => request.cookies.get(name)?.value,
+        get: (name) => request.cookies.get(name)?.value,
         set: () => undefined,
         remove: () => undefined
       }

@@ -13,6 +13,9 @@ export const createSupabaseServerClient = () => {
           cookieStore.set({ name, value, ...options }),
         remove: (name: string, options: { [key: string]: unknown }) =>
           cookieStore.set({ name, value: '', ...options })
+        get: (name) => cookieStore.get(name)?.value,
+        set: (name, value, options) => cookieStore.set({ name, value, ...options }),
+        remove: (name, options) => cookieStore.set({ name, value: '', ...options })
       }
     }
   );

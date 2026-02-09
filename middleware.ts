@@ -16,6 +16,9 @@ export async function middleware(request: NextRequest) {
           response.cookies.set({ name, value, ...options }),
         remove: (name: string, options: { [key: string]: unknown }) =>
           response.cookies.set({ name, value: '', ...options })
+        get: (name) => request.cookies.get(name)?.value,
+        set: (name, value, options) => response.cookies.set({ name, value, ...options }),
+        remove: (name, options) => response.cookies.set({ name, value: '', ...options })
       }
     }
   );

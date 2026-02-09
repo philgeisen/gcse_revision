@@ -10,5 +10,7 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     await supabase.auth.signOut();
   }
+  const supabase = createSupabaseServerClient();
+  await supabase.auth.signOut();
   return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'));
 }

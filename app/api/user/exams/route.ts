@@ -12,12 +12,14 @@ export async function POST(request: NextRequest) {
     startAt: string;
     durationMin?: number;
   }[] = body.exams ?? [];
+  const exams = body.exams ?? [];
 
   const subjects = await prisma.userSubject.findMany({ where: { userId } });
   await prisma.examEvent.deleteMany({ where: { userId } });
 
   for (const exam of exams) {
     const subject = subjects.find((item: { subjectName: string }) => item.subjectName === exam.subjectName);
+    const subject = subjects.find((item) => item.subjectName === exam.subjectName);
     if (!subject) continue;
     await prisma.examEvent.create({
       data: {

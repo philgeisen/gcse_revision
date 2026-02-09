@@ -1,9 +1,13 @@
+import { ExamEvent, QuestionBankItem } from '@prisma/client';
+
 export const buildMockSession = ({
   examEvent,
   question
 }: {
   examEvent: { examName: string; startAt: Date };
   question: { id: string; subjectName: string; topicLabel?: string | null };
+  examEvent: ExamEvent;
+  question: QuestionBankItem;
 }) => {
   return {
     schema_version: 1,

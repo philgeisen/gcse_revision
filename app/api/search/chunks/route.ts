@@ -17,6 +17,13 @@ export async function POST(request: NextRequest) {
       query,
       limit
     )) as { id: string; documentId: string; content: string }[];
+    const rows = await prisma.$queryRawUnsafe<
+      { id: string; documentId: string; content: string }[]
+    >(
+      `SELECT "id", "documentId", "content" FROM "DocumentChunk" WHERE to_tsvector('english', "content") @@ plainto_tsquery('english', $1) LIMIT $2`,
+      query,
+      limit
+    );
     return NextResponse.json({ chunks: rows });
   } catch (error) {
     const rows = await prisma.documentChunk.findMany({
