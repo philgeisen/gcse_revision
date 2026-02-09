@@ -1,0 +1,25 @@
+{
+  "pack": {
+    "name": "GCSE Core Pack",
+    "version": "v1",
+    "description": "AQA sciences + Edexcel maths core materials"
+  },
+  "documents": [
+    {
+      "file": "edexcel_maths_spec.pdf",
+      "kind": "spec",
+      "subjectName": "Maths",
+      "examBoardName": "Edexcel",
+      "tier": "Higher",
+      "title": "Edexcel GCSE Maths Specification"
+    },
+    {
+      "file": "aqa_bio_p1_markscheme.pdf",
+      "kind": "mark_scheme",
+      "subjectName": "Biology",
+      "examBoardName": "AQA",
+      "tier": "Higher",
+      "title": "AQA Biology Paper 1 Mark Scheme"
+    }
+  ]
+}
