@@ -13,6 +13,10 @@ import { ProgressGlyphs } from '@/components/motifs/ProgressGlyphs';
 import { SessionTape } from '@/components/motifs/SessionTape';
 import { createEvent } from '@/lib/tape/tape';
 
+export const dynamicParams = false;
+
+export const generateStaticParams = () => [{ id: 'mock' }];
+
 export default function SessionPage() {
   const [step, setStep] = useState(3);
   const [seconds, setSeconds] = useState(300);
